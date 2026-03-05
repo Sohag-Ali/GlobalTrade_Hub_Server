@@ -24,11 +24,30 @@ async function run() {
     await client.connect();
 
     const db = client.db("GlobalTradeHub");
+    const usersCollection = db.collection("users"); 
     const productsCollection = db.collection("products");
+    const importsCollection = db.collection("imports");
 
+
+    app.post('/users', async (req, res) => {
+      const user = req.body;
+      const query = { email: user.email };
+      const existingUser = await usersCollection.findOne(query);
+      if (existingUser) {
+        return res.status(400).send({ error: 'User with this email already exists' });
+      }
+      const result = await usersCollection.insertOne(user);
+      res.send(result);
+    });
+
+    //Product APIs
     app.post('/products', async (req, res) => {
       const product = req.body;
       const result = await productsCollection.insertOne(product);
+      res.send(result);
+    });
+    app.get('/products', async (req, res) => {
+      const result = await productsCollection.find().toArray();
       res.send(result);
     });
 
@@ -36,6 +55,28 @@ async function run() {
       const id = req.params.id;
       const query = { _id: new ObjectId(id)};
       const result = await productsCollection.deleteOne(query);
+      res.send(result);
+    });
+
+    // Imports APIs
+    app.post('/imports', async (req, res) => {
+      const importData = req.body;
+      const result = await importsCollection.insertOne(importData);
+      res.send(result);
+    });
+
+    app.get('/imports', async (req, res) => {
+      const result = await importsCollection.find().toArray();
+      res.send(result);
+    });
+
+    app.get('/imports', async (req, res) => {   
+      const email = req.query.email;
+      const query = {};
+        if(email){
+          query.importerEmail = email;
+        }
+      const result = await importsCollection.find(query).toArray();
       res.send(result);
     });
 
