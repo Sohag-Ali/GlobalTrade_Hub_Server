@@ -42,11 +42,11 @@ async function run() {
     });
 
     //Product APIs
-    // app.post("/products", async (req, res) => {
-    //   const product = req.body;
-    //   const result = await productsCollection.insertOne(product);
-    //   res.send(result);
-    // });
+    app.post("/products", async (req, res) => {
+      const product = req.body;
+      const result = await productsCollection.insertOne(product);
+      res.send(result);
+    });
 
     app.get("/latest-products", async (req, res) => {
       const result = await productsCollection
@@ -66,7 +66,7 @@ async function run() {
       res.send(result);
     });
 
-    app.patch("/products/:id", async (req, res) => {
+    app.patch("/products/import/:id", async (req, res) => {
       const id = req.params.id;
       const importQuantity = req.body.quantity;
 
@@ -100,8 +100,64 @@ async function run() {
       res.send(result);
     });
 
+    // app.get("/imports", async (req, res) => {
+    //   const result = await importsCollection.find().toArray();
+    //   res.send(result);
+    // });
+
     app.get("/imports", async (req, res) => {
-      const result = await importsCollection.find().toArray();
+      const email = req.query.email;
+
+      const query = { importerEmail: email };
+
+      const result = await importsCollection.find(query).toArray();
+
+      res.send(result);
+    });
+
+    app.delete("/imports/:id", async (req, res) => {
+      const id = req.params.id;
+
+      const query = { _id: new ObjectId(id) };
+
+      const result = await importsCollection.deleteOne(query);
+
+      res.send(result);
+    });
+
+    app.get("/my-exports", async (req, res) => {
+      const email = req.query.email;
+
+      const query = { exporterEmail: email };
+
+      const result = await productsCollection.find(query).toArray();
+
+      res.send(result);
+    });
+
+    app.delete("/products/:id", async (req, res) => {
+      const id = req.params.id;
+
+      const query = { _id: new ObjectId(id) };
+
+      const result = await productsCollection.deleteOne(query);
+
+      res.send(result);
+    });
+
+    app.patch("/products/:id", async (req, res) => {
+      const id = req.params.id;
+
+      const updatedData = req.body;
+
+      const query = { _id: new ObjectId(id) };
+
+      const updateDoc = {
+        $set: updatedData,
+      };
+
+      const result = await productsCollection.updateOne(query, updateDoc);
+
       res.send(result);
     });
 
