@@ -42,11 +42,11 @@ async function run() {
     });
 
     //Product APIs
-    app.post("/products", async (req, res) => {
-      const product = req.body;
-      const result = await productsCollection.insertOne(product);
-      res.send(result);
-    });
+    // app.post("/products", async (req, res) => {
+    //   const product = req.body;
+    //   const result = await productsCollection.insertOne(product);
+    //   res.send(result);
+    // });
 
     app.get("/latest-products", async (req, res) => {
       const result = await productsCollection
@@ -66,17 +66,32 @@ async function run() {
       res.send(result);
     });
 
-    app.get("/products", async (req, res) => {
-      const result = await productsCollection.find().toArray();
+    app.patch("/products/:id", async (req, res) => {
+      const id = req.params.id;
+      const importQuantity = req.body.quantity;
+
+      const query = { _id: new ObjectId(id) };
+
+      const updateDoc = {git 
+        $inc: { availableQuantity: -importQuantity },
+      };
+
+      const result = await productsCollection.updateOne(query, updateDoc);
+
       res.send(result);
     });
 
-    app.delete("/products/:id", async (req, res) => {
-      const id = req.params.id;
-      const query = { _id: new ObjectId(id) };
-      const result = await productsCollection.deleteOne(query);
-      res.send(result);
-    });
+    // app.get("/products", async (req, res) => {
+    //   const result = await productsCollection.find().toArray();
+    //   res.send(result);
+    // });
+
+    // app.delete("/products/:id", async (req, res) => {
+    //   const id = req.params.id;
+    //   const query = { _id: new ObjectId(id) };
+    //   const result = await productsCollection.deleteOne(query);
+    //   res.send(result);
+    // });
 
     // Imports APIs
     app.post("/imports", async (req, res) => {
@@ -90,15 +105,15 @@ async function run() {
       res.send(result);
     });
 
-    app.get("/imports", async (req, res) => {
-      const email = req.query.email;
-      const query = {};
-      if (email) {
-        query.importerEmail = email;
-      }
-      const result = await importsCollection.find(query).toArray();
-      res.send(result);
-    });
+    // app.get("/imports", async (req, res) => {
+    //   const email = req.query.email;
+    //   const query = {};
+    //   if (email) {
+    //     query.importerEmail = email;
+    //   }
+    //   const result = await importsCollection.find(query).toArray();
+    //   res.send(result);
+    // });
 
     await client.db("admin").command({ ping: 1 });
     console.log(
