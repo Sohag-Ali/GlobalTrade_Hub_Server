@@ -72,7 +72,7 @@ async function run() {
 
       const query = { _id: new ObjectId(id) };
 
-      const updateDoc = {git 
+      const updateDoc = {
         $inc: { availableQuantity: -importQuantity },
       };
 
