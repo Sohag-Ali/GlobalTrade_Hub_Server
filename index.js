@@ -1,11 +1,11 @@
 const express = require("express");
-const oors = require("cors");
+const cors = require("cors");
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 const app = express();
 const port = process.env.PORT || 3000;
 
 // Midelwre
-app.use(oors());
+app.use(cors());
 app.use(express.json());
 
 const uri =
@@ -47,6 +47,18 @@ async function run() {
       const result = await productsCollection.insertOne(product);
       res.send(result);
     });
+
+    app.get("/products", async (req, res) => {
+  const search = req.query.search || "";
+
+  const query = {
+    productName: { $regex: search, $options: "i" },
+  };
+
+  const result = await productsCollection.find(query).toArray();
+
+  res.send(result);
+});
 
     app.get("/latest-products", async (req, res) => {
       const result = await productsCollection
