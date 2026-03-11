@@ -1,6 +1,6 @@
 const express = require("express");
 const cors = require("cors");
-require('dotenv').config();
+require("dotenv").config();
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 const app = express();
 const port = process.env.PORT || 3000;
@@ -9,11 +9,9 @@ const port = process.env.PORT || 3000;
 app.use(cors());
 app.use(express.json());
 
-// const uri =
-//   "mongodb+srv://GlobalTradeHub:Nabv9wth2sqv7HK1@cluster0.tav8afj.mongodb.net/?appName=Cluster0";
+// MongoDB connection
 
-  const uri =
-  "mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.tav8afj.mongodb.net/?appName=Cluster0";
+const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.tav8afj.mongodb.net/?appName=Cluster0`;
 
 const client = new MongoClient(uri, {
   serverApi: {
@@ -23,6 +21,7 @@ const client = new MongoClient(uri, {
   },
 });
 
+// API Endpoints
 async function run() {
   try {
     await client.connect();
@@ -32,6 +31,7 @@ async function run() {
     const productsCollection = db.collection("products");
     const importsCollection = db.collection("imports");
 
+    // User APIs
     app.post("/users", async (req, res) => {
       const user = req.body;
       const query = { email: user.email };
@@ -51,19 +51,21 @@ async function run() {
       const result = await productsCollection.insertOne(product);
       res.send(result);
     });
-
+    
+    // Search products by name
     app.get("/products", async (req, res) => {
-  const search = req.query.search || "";
+      const search = req.query.search || "";
 
-  const query = {
-    productName: { $regex: search, $options: "i" },
-  };
+      const query = {
+        productName: { $regex: search, $options: "i" },
+      };
 
-  const result = await productsCollection.find(query).toArray();
+      const result = await productsCollection.find(query).toArray();
 
-  res.send(result);
-});
+      res.send(result);
+    });
 
+    // Get latest 6 products
     app.get("/latest-products", async (req, res) => {
       const result = await productsCollection
         .find()
@@ -75,6 +77,8 @@ async function run() {
       res.send(result);
     });
 
+
+    // Get product details by ID
     app.get("/products/:id", async (req, res) => {
       const id = req.params.id;
       const query = { _id: new ObjectId(id) };
@@ -82,6 +86,8 @@ async function run() {
       res.send(result);
     });
 
+
+    // Update available quantity after import
     app.patch("/products/import/:id", async (req, res) => {
       const id = req.params.id;
       const importQuantity = req.body.quantity;
@@ -121,6 +127,7 @@ async function run() {
     //   res.send(result);
     // });
 
+    // Get imports by importer email
     app.get("/imports", async (req, res) => {
       const email = req.query.email;
 
@@ -131,6 +138,8 @@ async function run() {
       res.send(result);
     });
 
+
+    // Get import details by ID
     app.delete("/imports/:id", async (req, res) => {
       const id = req.params.id;
 
@@ -141,6 +150,7 @@ async function run() {
       res.send(result);
     });
 
+    // Get exports by exporter email
     app.get("/my-exports", async (req, res) => {
       const email = req.query.email;
 
@@ -151,6 +161,7 @@ async function run() {
       res.send(result);
     });
 
+    // Delete product by ID
     app.delete("/products/:id", async (req, res) => {
       const id = req.params.id;
 
@@ -161,6 +172,7 @@ async function run() {
       res.send(result);
     });
 
+    // Update product details by ID
     app.patch("/products/:id", async (req, res) => {
       const id = req.params.id;
 
