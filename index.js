@@ -10,7 +10,8 @@ const admin = require("firebase-admin");
 
 // index.js
 const decoded = Buffer.from(process.env.FIREBASE_SERVICE_KEY, "base64").toString("utf8");
-const serviceAccount = JSON.parse(decoded);
+// const serviceAccount = JSON.parse(decoded);
+const serviceAccount = require("./firebaseAdmin.json");
 
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount)
@@ -24,22 +25,24 @@ app.use(express.json());
 // MongoDB connection
 
 const verifyFirebaseToken = async (req, res, next) => {
-  const authHeader = req.headers.authorization;   
-  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+  const authorization = req.headers.authorization; 
+  if (!authorization || !authorization.startsWith("Bearer ")) {
     return res.status(401).send({ error: "Unauthorized" });
   }
-
-  const token = authHeader.split(" ")[1];
+  const token = authorization.split(" ")[1];
 
   try {
-    
-    const decodedToken = await admin.auth().verifyIdToken(token);
-    req.user = decodedToken;
+    const decoded= await admin.auth().verifyIdToken(token);
+    console.log("Decoded Firebase token:", decoded);
+    req.token_email = decoded.email; 
     next();
   } catch (error) {
-    console.error("Error verifying token:", error);
-    return res.status(401).send({ error: "Unauthorized" });
-  }
+    console.error("Error verifying Firebase token:", error);
+    res.status(401).send({ error: "Unauthorized" });
+  } 
+  
+  
+ 
 };
 
 
@@ -79,7 +82,9 @@ async function run() {
     });
 
     //Product APIs
-    app.post("/products", async (req, res) => {
+    app.post("/products", verifyFirebaseToken, async (req, res) => {
+      
+      console.log("Received product data:", req.headers);
       const product = req.body;
       const result = await productsCollection.insertOne(product);
       res.send(result);
@@ -184,10 +189,17 @@ async function run() {
     });
 
     // Get exports by exporter email
-    app.get("/my-exports", async (req, res) => {
+    app.get("/my-exports", verifyFirebaseToken, async (req, res) => {
       const email = req.query.email;
 
-      const query = { exporterEmail: email };
+      const query = {};
+      if(email){
+        query.exporterEmail = email;
+      }
+      if (email !== req.token_email) {
+        return res.status(403).send({ error: "Forbidden" });
+      }
+      
 
       const result = await productsCollection.find(query).toArray();
 
