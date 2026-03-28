@@ -6,13 +6,15 @@ const app = express();
 const port = process.env.PORT || 3000;
 
 
-// const admin = require("firebase-admin");
+const admin = require("firebase-admin");
 
-// const serviceAccount = require("./firebaseAdmin.json");
+// index.js
+const decoded = Buffer.from(process.env.FIREBASE_SERVICE_KEY, "base64").toString("utf8");
+const serviceAccount = JSON.parse(decoded);
 
-// admin.initializeApp({
-//   credential: admin.credential.cert(serviceAccount)
-// });
+admin.initializeApp({
+  credential: admin.credential.cert(serviceAccount)
+});
 
 
 // Midelwre
@@ -21,24 +23,24 @@ app.use(express.json());
 
 // MongoDB connection
 
-// const verifyFirebaseToken = async (req, res, next) => {
-//   const authHeader = req.headers.authorization;   
-//   if (!authHeader || !authHeader.startsWith("Bearer ")) {
-//     return res.status(401).send({ error: "Unauthorized" });
-//   }
+const verifyFirebaseToken = async (req, res, next) => {
+  const authHeader = req.headers.authorization;   
+  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    return res.status(401).send({ error: "Unauthorized" });
+  }
 
-//   const token = authHeader.split(" ")[1];
+  const token = authHeader.split(" ")[1];
 
-//   try {
+  try {
     
-//     const decodedToken = await admin.auth().verifyIdToken(token);
-//     req.user = decodedToken;
-//     next();
-//   } catch (error) {
-//     console.error("Error verifying token:", error);
-//     return res.status(401).send({ error: "Unauthorized" });
-//   }
-// };
+    const decodedToken = await admin.auth().verifyIdToken(token);
+    req.user = decodedToken;
+    next();
+  } catch (error) {
+    console.error("Error verifying token:", error);
+    return res.status(401).send({ error: "Unauthorized" });
+  }
+};
 
 
 
