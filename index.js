@@ -13,7 +13,7 @@ const decoded = Buffer.from(
   "base64",
 ).toString("utf8");
 const serviceAccount = JSON.parse(decoded);
-// const serviceAccount = require("./firebaseAdmin.json");
+
 
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
