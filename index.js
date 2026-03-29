@@ -5,18 +5,19 @@ const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 const app = express();
 const port = process.env.PORT || 3000;
 
-
 const admin = require("firebase-admin");
 
 // index.js
-const decoded = Buffer.from(process.env.FIREBASE_SERVICE_KEY, "base64").toString("utf8");
+const decoded = Buffer.from(
+  process.env.FIREBASE_SERVICE_KEY,
+  "base64",
+).toString("utf8");
 // const serviceAccount = JSON.parse(decoded);
 const serviceAccount = require("./firebaseAdmin.json");
 
 admin.initializeApp({
-  credential: admin.credential.cert(serviceAccount)
+  credential: admin.credential.cert(serviceAccount),
 });
-
 
 // Midelwre
 app.use(cors());
@@ -25,27 +26,22 @@ app.use(express.json());
 // MongoDB connection
 
 const verifyFirebaseToken = async (req, res, next) => {
-  const authorization = req.headers.authorization; 
+  const authorization = req.headers.authorization;
   if (!authorization || !authorization.startsWith("Bearer ")) {
     return res.status(401).send({ error: "Unauthorized" });
   }
   const token = authorization.split(" ")[1];
 
   try {
-    const decoded= await admin.auth().verifyIdToken(token);
+    const decoded = await admin.auth().verifyIdToken(token);
     console.log("Decoded Firebase token:", decoded);
-    req.token_email = decoded.email; 
+    req.token_email = decoded.email;
     next();
   } catch (error) {
     console.error("Error verifying Firebase token:", error);
     res.status(401).send({ error: "Unauthorized" });
-  } 
-  
-  
- 
+  }
 };
-
-
 
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.tav8afj.mongodb.net/?appName=Cluster0`;
 
@@ -83,13 +79,12 @@ async function run() {
 
     //Product APIs
     app.post("/products", verifyFirebaseToken, async (req, res) => {
-      
-      console.log("Received product data:", req.headers);
+      // console.log("Received product data:", req.headers);
       const product = req.body;
       const result = await productsCollection.insertOne(product);
       res.send(result);
     });
-    
+
     // Search products by name
     app.get("/products", async (req, res) => {
       const search = req.query.search || "";
@@ -115,7 +110,6 @@ async function run() {
       res.send(result);
     });
 
-
     // Get product details by ID
     app.get("/products/:id", async (req, res) => {
       const id = req.params.id;
@@ -124,11 +118,26 @@ async function run() {
       res.send(result);
     });
 
-
     // Update available quantity after import
-    app.patch("/products/import/:id", async (req, res) => {
+    app.patch("/products/import/:id", verifyFirebaseToken, async (req, res) => {
       const id = req.params.id;
       const importQuantity = req.body.quantity;
+        if (!importQuantity || importQuantity <= 0) {
+    return res.status(400).send({ error: "Invalid quantity" });
+  }
+
+    const product = await productsCollection.findOne({
+    _id: new ObjectId(id),
+  });
+
+    if (!product) {
+    return res.status(404).send({ error: "Product not found" });
+  }
+
+    if (product.availableQuantity < importQuantity) {
+    return res.status(400).send({ error: "Not enough stock" });
+  }
+  
 
       const query = { _id: new ObjectId(id) };
 
@@ -154,8 +163,11 @@ async function run() {
     // });
 
     // Imports APIs
-    app.post("/imports", async (req, res) => {
+    app.post("/imports", verifyFirebaseToken, async (req, res) => {
       const importData = req.body;
+      if (!importData.productId || !importData.quantity) {
+  return res.status(400).send({ error: "Missing required fields" });
+}
       const result = await importsCollection.insertOne(importData);
       res.send(result);
     });
@@ -166,20 +178,36 @@ async function run() {
     // });
 
     // Get imports by importer email
-    app.get("/imports", async (req, res) => {
+    app.get("/imports", verifyFirebaseToken, async (req, res) => {
       const email = req.query.email;
 
-      const query = { importerEmail: email };
+       const query = {};
+      if (email) {
+        query.importerEmail = email;
+      }
+      if (email !== req.token_email) {
+        return res.status(403).send({ error: "Forbidden" });
+      }
+
+      // const query = { importerEmail: email };
 
       const result = await importsCollection.find(query).toArray();
 
       res.send(result);
     });
 
-
     // Get import details by ID
-    app.delete("/imports/:id", async (req, res) => {
+    app.delete("/imports/:id", verifyFirebaseToken, async (req, res) => {
       const id = req.params.id;
+      const importRecord = await importsCollection.findOne({
+        _id: new ObjectId(id),
+      });
+      if (!importRecord) {
+        return res.status(404).send({ error: "Import record not found" });
+      }
+      if (importRecord.importerEmail !== req.token_email) {
+        return res.status(403).send({ error: "Forbidden" });
+      }
 
       const query = { _id: new ObjectId(id) };
 
@@ -193,13 +221,12 @@ async function run() {
       const email = req.query.email;
 
       const query = {};
-      if(email){
+      if (email) {
         query.exporterEmail = email;
       }
       if (email !== req.token_email) {
         return res.status(403).send({ error: "Forbidden" });
       }
-      
 
       const result = await productsCollection.find(query).toArray();
 
@@ -207,8 +234,17 @@ async function run() {
     });
 
     // Delete product by ID
-    app.delete("/products/:id", async (req, res) => {
+    app.delete("/products/:id", verifyFirebaseToken, async (req, res) => {
       const id = req.params.id;
+      const product = await productsCollection.findOne({
+        _id: new ObjectId(id),
+      });
+      if (!product) {
+        return res.status(404).send({ error: "Product not found" });
+      }
+      if (product.exporterEmail !== req.token_email) {
+        return res.status(403).send({ error: "Forbidden" });
+      }
 
       const query = { _id: new ObjectId(id) };
 
@@ -218,10 +254,19 @@ async function run() {
     });
 
     // Update product details by ID
-    app.patch("/products/:id", async (req, res) => {
+    app.patch("/products/:id", verifyFirebaseToken, async (req, res) => {
       const id = req.params.id;
 
       const updatedData = req.body;
+      const product = await productsCollection.findOne({
+    _id: new ObjectId(id),
+  });
+      if (!product) {
+        return res.status(404).send({ error: "Product not found" });
+      }
+      if (product.exporterEmail !== req.token_email) {
+        return res.status(403).send({ error: "Forbidden" });
+      }
 
       const query = { _id: new ObjectId(id) };
 
