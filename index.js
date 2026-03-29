@@ -137,7 +137,7 @@ async function run() {
     if (product.availableQuantity < importQuantity) {
     return res.status(400).send({ error: "Not enough stock" });
   }
-  
+
 
       const query = { _id: new ObjectId(id) };
 
@@ -165,7 +165,7 @@ async function run() {
     // Imports APIs
     app.post("/imports", verifyFirebaseToken, async (req, res) => {
       const importData = req.body;
-      if (!importData.productId || !importData.quantity) {
+      if (!importData.productId || !importData.importedQuantity) {
   return res.status(400).send({ error: "Missing required fields" });
 }
       const result = await importsCollection.insertOne(importData);
