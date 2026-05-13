@@ -20,19 +20,19 @@ admin.initializeApp({
 });
 
 // Midelwre
-const corsOptions = {
-  origin: [
-    "http://localhost:5173",
-    "http://localhost:3000",
-    "https://global-tread-hub.web.app",
-  ],
-  credentials: true,
-  methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization"],
-};
+const cors = require("cors");
 
-app.use(cors(corsOptions));
+app.use(
+  cors({
+    origin: [
+      "http://localhost:5173",
+      "https://global-tread-hub.web.app",
+    ],
+    credentials: true,
+  })
+);
 
+app.use(express.json());
 
 app.use(express.json());
 
@@ -317,8 +317,8 @@ app.get("/", (req, res) => {
 });
 
 // module.exports = app;
-// module.exports = app;
+module.exports = app;
 
-app.listen(port, () => {
-  console.log(`GlobalTrade Hub listening on port ${port}`);
-});
+// app.listen(port, () => {
+//   console.log(`GlobalTrade Hub listening on port ${port}`);
+// });
