@@ -58,7 +58,7 @@ async function run() {
   try {
     await client.connect();
 
-    const db = client.db("GlobalTradeHub");
+    const db = client.db("GlobalHub");
     const usersCollection = db.collection("users");
     const productsCollection = db.collection("products");
     const importsCollection = db.collection("imports");
@@ -304,8 +304,8 @@ app.get("/", (req, res) => {
 });
 
 // module.exports = app;
-module.exports = app;
+// module.exports = app;
 
-// app.listen(port, () => {
-//   console.log(`GlobalTrade Hub listening on port ${port}`);
-// });
+app.listen(port, () => {
+  console.log(`GlobalTrade Hub listening on port ${port}`);
+});
