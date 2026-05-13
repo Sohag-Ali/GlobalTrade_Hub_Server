@@ -62,17 +62,39 @@ const client = new MongoClient(uri, {
     strict: true,
     deprecationErrors: true,
   },
+  maxPoolSize: 1,
+  serverSelectionTimeoutMS: 5000,
+  socketTimeoutMS: 45000,
 });
 
-// API Endpoints
-async function run() {
-  try {
-    await client.connect();
-
-    const db = client.db("GlobalHub");
+  const db = client.db("GlobalHub");
     const usersCollection = db.collection("users");
     const productsCollection = db.collection("products");
     const importsCollection = db.collection("imports");
+
+    client.connect()
+  .then(() => console.log("MongoDB connected"))
+  .catch(console.error);
+
+  app.use(async (req, res, next) => {
+  try {
+    await client.db("admin").command({ ping: 1 });
+    next();
+  } catch (err) {
+    try {
+      await client.connect();
+      next();
+    } catch (e) {
+      res.status(500).send({ error: "DB connection failed" });
+    }
+  }
+});
+
+app.get("/", (req, res) => {
+  res.send("GlobalTrade Hub is running");
+});
+// API Endpoints
+
 
     // User APIs
     app.post("/users", async (req, res) => {
@@ -304,15 +326,15 @@ async function run() {
     // console.log(
     //   "Pinged your deployment. You successfully connected to MongoDB!",
     // );
-  } finally {
+  // } finally {
     // await client.close();
-  }
-}
-run().catch(console.dir);
+  // }
 
-app.get("/", (req, res) => {
-  res.send("GlobalTrade Hub is running");
-});
+// run().catch(console.dir);
+
+// app.get("/", (req, res) => {
+//   res.send("GlobalTrade Hub is running");
+// });
 
 // module.exports = app;
 // module.exports = app;
