@@ -22,7 +22,15 @@ admin.initializeApp({
 // Midelwre
 
 
-app.use(cors());
+app.use(cors({
+  origin: [
+    "http://localhost:5173",
+    "http://localhost:3000",
+    "https://global-tread-hub.web.app",        // ← আপনার Firebase URL
+    "https://global-tread-hub.firebaseapp.com"  // ← এটাও add করুন
+  ],
+  credentials: true
+}));
 
 app.use(express.json());
 
