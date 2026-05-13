@@ -22,7 +22,19 @@ admin.initializeApp({
 // Midelwre
 
 
-app.use(cors());
+const cors = require("cors");
+
+app.use(
+  cors({
+    origin: [
+      "http://localhost:5173",
+      "https://global-tread-hub.web.app",
+      "https://global-tread-hub.firebaseapp.com",
+    ],
+    credentials: true,
+  })
+);
+
 app.use(express.json());
 
 // MongoDB connection
