@@ -1,10 +1,11 @@
 const express = require("express");
+const app = express()
 const cors = require("cors");
 require("dotenv").config();
 const dns = require('dns');
 dns.setServers(['1.1.1.1', '8.8.8.8']);
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
-const app = express();
+
 const port = process.env.PORT || 3000;
 
 const admin = require("firebase-admin");
@@ -289,9 +290,9 @@ async function run() {
     // });
 
     // await client.db("admin").command({ ping: 1 });
-    console.log(
-      "Pinged your deployment. You successfully connected to MongoDB!",
-    );
+    // console.log(
+    //   "Pinged your deployment. You successfully connected to MongoDB!",
+    // );
   } finally {
     // await client.close();
   }
@@ -302,8 +303,8 @@ app.get("/", (req, res) => {
   res.send("GlobalTrade Hub is running");
 });
 
-module.exports = app;
+// module.exports = app;
 
-// app.listen(port, () => {
-//   console.log(`GlobalTrade Hub listening on port ${port}`);
-// });
+app.listen(port, () => {
+  console.log(`GlobalTrade Hub listening on port ${port}`);
+});
