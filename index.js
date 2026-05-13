@@ -20,20 +20,9 @@ admin.initializeApp({
 });
 
 // Midelwre
-const cors = require("cors");
 
-app.use(
-  cors({
-    origin: [
-      "http://localhost:5173",
-      "https://global-tread-hub.web.app",
-    ],
-    credentials: true,
-  })
-);
 
-app.use(express.json());
-
+app.use(cors());
 app.use(express.json());
 
 // MongoDB connection
@@ -317,8 +306,8 @@ app.get("/", (req, res) => {
 });
 
 // module.exports = app;
-module.exports = app;
+// module.exports = app;
 
-// app.listen(port, () => {
-//   console.log(`GlobalTrade Hub listening on port ${port}`);
-// });
+app.listen(port, () => {
+  console.log(`GlobalTrade Hub listening on port ${port}`);
+});
